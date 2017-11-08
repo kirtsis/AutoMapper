@@ -1,5 +1,5 @@
 ﻿using System;
-using Should;
+using Shouldly;
 using AutoMapper;
 using Xunit;
 
@@ -26,7 +26,7 @@ namespace AutoMapper.UnitTests.Bug
             public Values? Value { get; set; }
         }
 
-        protected override MapperConfiguration Configuration => new MapperConfiguration(cfg =>
+        protected override MapperConfiguration Configuration { get; } = new MapperConfiguration(cfg =>
         {
             cfg.CreateMap<Source, Destination>();
         });

@@ -1,37 +1,30 @@
 using System;
+using System.Linq.Expressions;
+using System.Reflection;
 
 namespace AutoMapper
 {
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Linq.Expressions;
-    using System.Reflection;
-
     public class ConstructorParameterMap
     {
-        public ConstructorParameterMap(ParameterInfo parameter, IValueResolver[] sourceResolvers, bool canResolve)
+        public ConstructorParameterMap(ParameterInfo parameter, MemberInfo[] sourceMembers, bool canResolve)
         {
             Parameter = parameter;
-            SourceResolvers = sourceResolvers;
+            SourceMembers = sourceMembers;
             CanResolve = canResolve;
         }
 
-        public ParameterInfo Parameter { get; private set; }
+        public ParameterInfo Parameter { get; }
 
-        public IValueResolver[] SourceResolvers { get; private set; }
+        public MemberInfo[] SourceMembers { get; }
 
         public bool CanResolve { get; set; }
 
-        public ResolutionResult ResolveValue(ResolutionContext context)
-        {
-            var result = new ResolutionResult(context);
+        public bool DefaultValue { get; set; }
 
-            return SourceResolvers.Aggregate(result, (current, resolver) => resolver.Resolve(current));
-        }
+        public LambdaExpression CustomExpression { get; set; }
 
-        public void ResolveUsing(IEnumerable<IMemberGetter> members)
-        {
-            SourceResolvers = members.ToArray();
-        }
+        public LambdaExpression CustomValueResolver { get; set; }
+
+        public Type DestinationType => Parameter.ParameterType;
     }
 }

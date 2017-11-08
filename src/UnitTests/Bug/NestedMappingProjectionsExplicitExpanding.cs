@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 using AutoMapper.QueryableExtensions;
-using Should;
+using Shouldly;
 using Xunit;
 
 namespace AutoMapper.UnitTests.Bug
@@ -41,7 +41,7 @@ namespace AutoMapper.UnitTests.Bug
             public int Prop { get; set; }
         }
 
-        protected override MapperConfiguration Configuration => new MapperConfiguration(cfg =>
+        protected override MapperConfiguration Configuration { get; } = new MapperConfiguration(cfg =>
         {
             cfg.CreateMap<FuEntity, Fu>().ForMember(dest => dest.Man, opt => opt.ExplicitExpansion());
             cfg.CreateMap<ManEntity, Man>().ForMember(dest => dest.Chu, opt => opt.ExplicitExpansion());
@@ -57,7 +57,7 @@ namespace AutoMapper.UnitTests.Bug
         [Fact]
         public void Should_map_nested_classes()
         {
-            _destination.Man.Chu.Prop.ShouldEqual(_propValue);
+            _destination.Man.Chu.Prop.ShouldBe(_propValue);
         }
     }
 }

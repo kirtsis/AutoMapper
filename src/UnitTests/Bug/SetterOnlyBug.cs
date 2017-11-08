@@ -2,12 +2,12 @@
 {
     namespace SetterOnlyBug
     {
-        using Should;
+        using Shouldly;
         using Xunit;
 
         public class MappingTests : AutoMapperSpecBase
         {
-            protected override MapperConfiguration Configuration => new MapperConfiguration(cfg =>
+            protected override MapperConfiguration Configuration { get; } = new MapperConfiguration(cfg =>
             {
                 cfg
                     .CreateMap<Source, Desitination>()

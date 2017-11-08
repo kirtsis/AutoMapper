@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Dynamic;
-using Should;
-using Should.Core.Assertions;
+using System.Linq;
+using Shouldly;
 using Xunit;
 
 namespace AutoMapper.UnitTests.Mappers.Dynamic
@@ -10,6 +10,8 @@ namespace AutoMapper.UnitTests.Mappers.Dynamic
     {
         public string Foo { get; set; }
         public string Bar { get; set; }
+        internal string Jack { get; set; }
+        public int[] Data { get; set; }
     }
 
     public class DynamicDictionary : DynamicObject
@@ -26,6 +28,30 @@ namespace AutoMapper.UnitTests.Mappers.Dynamic
             dictionary[binder.Name] = value;
             return true;
         }
+
+        public int Count => dictionary.Count;
+    }
+
+    public class When_mapping_to_dynamic_from_getter_only_property
+    {
+        class Source
+        {
+            public Source()
+            {
+                Value = 24;
+            }
+
+            public int Value { get; }
+        }
+
+        [Fact]
+        public void Should_map_source_properties()
+        {
+            var config = new MapperConfiguration(cfg => { });
+            dynamic destination = config.CreateMapper().Map<DynamicDictionary>(new Source());
+            ((int)destination.Count).ShouldBe(1);
+            Assert.Equal(24, destination.Value);
+        }
     }
 
     public class When_mapping_to_dynamic
@@ -35,9 +61,13 @@ namespace AutoMapper.UnitTests.Mappers.Dynamic
         [Fact]
         public void Should_map_source_properties()
         {
-            _destination = Mapper.Map<DynamicDictionary>(new Destination {Foo = "Foo", Bar = "Bar"});
+            var config = new MapperConfiguration(cfg => { });
+            var data = new[] { 1, 2, 3 };
+            _destination = config.CreateMapper().Map<DynamicDictionary>(new Destination { Foo = "Foo", Bar = "Bar", Data = data });
+            ((int)_destination.Count).ShouldBe(3);
             Assert.Equal("Foo", _destination.Foo);
             Assert.Equal("Bar", _destination.Bar);
+            ((int[])_destination.Data).SequenceEqual(data).ShouldBeTrue();
         }
     }
 
@@ -51,9 +81,38 @@ namespace AutoMapper.UnitTests.Mappers.Dynamic
             dynamic source = new DynamicDictionary();
             source.Foo = "Foo";
             source.Bar = "Bar";
-            _destination = Mapper.Map<Destination>(source);
-            _destination.Foo.ShouldEqual("Foo");
-            _destination.Bar.ShouldEqual("Bar");
+            source.Jack = "Jack";
+            var config = new MapperConfiguration(cfg => { });
+            _destination = config.CreateMapper().Map<Destination>(source);
+            _destination.Foo.ShouldBe("Foo");
+            _destination.Bar.ShouldBe("Bar");
+            _destination.Jack.ShouldBeNull();
+        }
+    }
+
+    public class When_mapping_struct_from_dynamic
+    {
+        Destination _destination;
+
+        struct Destination
+        {
+            public string Foo { get; set; }
+            public string Bar { get; set; }
+            internal string Jack { get; set; }
+        }
+
+        [Fact]
+        public void Should_map_destination_properties()
+        {
+            dynamic source = new DynamicDictionary();
+            source.Foo = "Foo";
+            source.Bar = "Bar";
+            source.Jack = "Jack";
+            var config = new MapperConfiguration(cfg => { });
+            _destination = config.CreateMapper().Map<Destination>(source);
+            _destination.Foo.ShouldBe("Foo");
+            _destination.Bar.ShouldBe("Bar");
+            _destination.Jack.ShouldBeNull();
         }
     }
 
@@ -66,8 +125,9 @@ namespace AutoMapper.UnitTests.Mappers.Dynamic
         {
             dynamic source = new DynamicDictionary();
             source.Foo = "Foo";
-            _destination = Mapper.Map<Destination>(source);
-            _destination.Foo.ShouldEqual("Foo");
+            var config = new MapperConfiguration(cfg => { });
+            _destination = config.CreateMapper().Map<Destination>(source);
+            _destination.Foo.ShouldBe("Foo");
             _destination.Bar.ShouldBeNull();
         }
     }
@@ -82,9 +142,54 @@ namespace AutoMapper.UnitTests.Mappers.Dynamic
             dynamic source = new DynamicDictionary();
             source.Foo = "Foo";
             source.Bar = "Bar";
-            _destination = Mapper.Map<DynamicDictionary>(source);
+            var config = new MapperConfiguration(cfg => { });
+            _destination = config.CreateMapper().Map<DynamicDictionary>(source);
             Assert.Equal("Foo", _destination.Foo);
             Assert.Equal("Bar", _destination.Bar);
+        }
+    }
+
+    public class When_mapping_from_dynamic_to_nullable
+    {
+        class DestinationWithNullable
+        {
+            public string StringValue { get; set; }
+            public int? NullIntValue { get; set; }
+        }
+
+        [Fact]
+        public void Should_map_with_non_null_source()
+        {
+            dynamic source = new DynamicDictionary();
+            source.StringValue = "Test";
+            source.NullIntValue = 5;
+            var config = new MapperConfiguration(cfg => { });
+            var destination = config.CreateMapper().Map<DestinationWithNullable>(source);
+            Assert.Equal("Test", destination.StringValue);
+            Assert.Equal(5, destination.NullIntValue);
+        }
+
+        [Fact]
+        public void Should_map_with_source_missing()
+        {
+            dynamic source = new DynamicDictionary();
+            source.StringValue = "Test";
+            var config = new MapperConfiguration(cfg => { });
+            var destination = config.CreateMapper().Map<DestinationWithNullable>(source);
+            Assert.Equal("Test", destination.StringValue);
+            Assert.Equal((int?)null, destination.NullIntValue);
+        }
+
+        [Fact]
+        public void Should_map_with_null_source()
+        {
+            dynamic source = new DynamicDictionary();
+            source.StringValue = "Test";
+            source.NullIntValue = null;
+            var config = new MapperConfiguration(cfg => { });
+            var destination = config.CreateMapper().Map<DestinationWithNullable>(source);
+            Assert.Equal("Test", destination.StringValue);
+            Assert.Equal((int?)null, destination.NullIntValue);
         }
     }
 }

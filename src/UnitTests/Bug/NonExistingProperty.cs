@@ -1,5 +1,5 @@
 ﻿using System;
-using Should;
+using Shouldly;
 using Xunit;
 
 namespace AutoMapper.UnitTests.Bug
@@ -17,8 +17,7 @@ namespace AutoMapper.UnitTests.Bug
         [Fact]
         public void Should_report_missing_property()
         {
-            var mapping = Mapper.CreateMap<Source, Destination>();
-            new Action(() => mapping.ForMember("X", s => { })).ShouldThrow<ArgumentOutOfRangeException>();
+            new Action(() => new MapperConfiguration(cfg => cfg.CreateMap<Source, Destination>().ForMember("X", s => { }))).ShouldThrow<ArgumentOutOfRangeException>();
         }
     }
 }

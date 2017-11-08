@@ -3,7 +3,7 @@
     using System.Collections.Generic;
     using System.Linq;
     using QueryableExtensions;
-    using Should;
+    using Shouldly;
     using Xunit;
 
     public class NullSubstitutes : AutoMapperSpecBase
@@ -20,7 +20,7 @@
             public int? Value { get; set; }            
         }
 
-        protected override MapperConfiguration Configuration => new MapperConfiguration(cfg =>
+        protected override MapperConfiguration Configuration { get; } = new MapperConfiguration(cfg =>
         {
             cfg.CreateMap<Source, Dest>().ForMember(m => m.Value, opt => opt.NullSubstitute(5));
         });
@@ -35,7 +35,7 @@
         [Fact]
         public void Can_substitute_null_values()
         {
-            _dests[0].Value.ShouldEqual(5);
+            _dests[0].Value.ShouldBe(5);
         }
     }
 
@@ -53,7 +53,7 @@
             public int? ValuePropertyNotMatching { get; set; }            
         }
 
-        protected override MapperConfiguration Configuration => new MapperConfiguration(cfg =>
+        protected override MapperConfiguration Configuration { get; } = new MapperConfiguration(cfg =>
         {
             cfg.CreateMap<Source, Dest>().ForMember(m => m.ValuePropertyNotMatching, opt =>
             {
@@ -72,7 +72,7 @@
         [Fact]
         public void Can_substitute_null_values()
         {
-            _dests[0].ValuePropertyNotMatching.ShouldEqual(5);
+            _dests[0].ValuePropertyNotMatching.ShouldBe(5);
         }
     }
 }

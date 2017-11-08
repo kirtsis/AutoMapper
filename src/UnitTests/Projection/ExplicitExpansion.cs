@@ -2,7 +2,7 @@
 {
     using System.Linq;
     using QueryableExtensions;
-    using Should;
+    using Shouldly;
     using Xunit;
 
     public class ExplicitExpansion : AutoMapperSpecBase
@@ -32,7 +32,7 @@
         {
         }
 
-        protected override MapperConfiguration Configuration => new MapperConfiguration(cfg =>
+        protected override MapperConfiguration Configuration { get; } = new MapperConfiguration(cfg =>
         {
             cfg.CreateMap<Source, Dest>()
                 .ForMember(m => m.Child1, opt => opt.ExplicitExpansion())

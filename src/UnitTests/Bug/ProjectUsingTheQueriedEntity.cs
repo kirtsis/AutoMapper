@@ -1,5 +1,5 @@
 ﻿using Xunit;
-using Should;
+using Shouldly;
 using System;
 using System.Linq;
 using AutoMapper.QueryableExtensions;
@@ -19,7 +19,7 @@ namespace AutoMapper.UnitTests.Bug
             public int Number { get; set; }
         }
 
-        protected override MapperConfiguration Configuration => new MapperConfiguration(cfg =>
+        protected override MapperConfiguration Configuration { get; } = new MapperConfiguration(cfg =>
         {
             cfg.CreateMap<Source, Destination>().ProjectUsing(s => new Destination {Number = 23 + s.Number});
         });
@@ -32,7 +32,7 @@ namespace AutoMapper.UnitTests.Bug
         [Fact]
         public void Should_handle_projectusing_with_the_queried_entity()
         {
-            _destination.Number.ShouldEqual(23);
+            _destination.Number.ShouldBe(23);
         }
     }
 }

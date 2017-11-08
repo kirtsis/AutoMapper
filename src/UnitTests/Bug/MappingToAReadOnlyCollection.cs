@@ -1,6 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
-using Should;
+using Shouldly;
 using Xunit;
 
 namespace AutoMapper.UnitTests.Bug
@@ -21,7 +21,7 @@ namespace AutoMapper.UnitTests.Bug
             public ReadOnlyCollection<int> Values2 { get; set; }
         }
 
-        protected override MapperConfiguration Configuration => new MapperConfiguration(cfg =>
+        protected override MapperConfiguration Configuration { get; } = new MapperConfiguration(cfg =>
         {
             cfg.CreateMap<Source, Destination>();
         });

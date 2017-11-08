@@ -6,8 +6,7 @@ namespace AutoMapper.UnitTests.Projection
     {
         using System.Linq;
         using QueryableExtensions;
-        using Should;
-        using Should.Core.Assertions;
+        using Shouldly;
         using Xunit;
 
         public class NullChildItemTest
@@ -16,7 +15,10 @@ namespace AutoMapper.UnitTests.Projection
 
             public NullChildItemTest()
             {
-                _config = new MapperConfiguration(cfg => cfg.CreateMap<Parent, ParentDto>());
+                _config = new MapperConfiguration(cfg => {
+                    cfg.CreateMap<Parent, ParentDto>();
+                    cfg.AllowNullCollections = true;
+                });
             }
 
             [Fact]
@@ -32,11 +34,12 @@ namespace AutoMapper.UnitTests.Projection
 
                 var projected = items.AsQueryable().ProjectTo<ParentDto>(_config).ToList();
 
-                projected[0].Value.ShouldEqual(5);
+                projected[0].Value.ShouldBe(5);
                 projected[0].ChildValue.ShouldBeNull();
                 projected[0].ChildGrandChildValue.ShouldBeNull();
+                projected[0].Nephews.ShouldBeNull();
             }
-
+                       
 
             public class ParentDto
             {
@@ -44,6 +47,7 @@ namespace AutoMapper.UnitTests.Projection
                 public int? ChildValue { get; set; }
                 public int? ChildGrandChildValue { get; set; }
                 public DateTime? Date { get; set; }
+                public Child[] Nephews { get; set; }
             }
 
 
@@ -51,6 +55,7 @@ namespace AutoMapper.UnitTests.Projection
             {
                 public int Value { get; set; }
                 public Child Child { get; set; }
+                public Child[] Nephews { get; set; }
             }
 
             public class Child

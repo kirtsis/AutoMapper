@@ -1,6 +1,6 @@
 ﻿using System.Linq;
 using AutoMapper.QueryableExtensions;
-using Should;
+using Shouldly;
 using Xunit;
 
 namespace AutoMapper.UnitTests.Bug
@@ -36,7 +36,7 @@ namespace AutoMapper.UnitTests.Bug
             }
         }
 
-        protected override MapperConfiguration Configuration => new MapperConfiguration(cfg =>
+        protected override MapperConfiguration Configuration { get; } = new MapperConfiguration(cfg =>
         {
             cfg.CreateMap<Source, SourceDto>();
         });
@@ -51,7 +51,7 @@ namespace AutoMapper.UnitTests.Bug
         [Fact]
         public void Should_project_constructor_parameter_mappings()
         {
-            _dest.Value.ShouldEqual(SomeValue);
+            _dest.Value.ShouldBe(SomeValue);
         }
     }
 }

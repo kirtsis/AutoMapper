@@ -5,10 +5,10 @@
     using System.Linq;
     using System.Linq.Expressions;
     using QueryableExtensions;
-    using Should;
+    using Shouldly;
     using Xunit;
 
-    public class ParameterizedQueriesTests_with_anonymous_object_and_factory : SpecBase
+    public class ParameterizedQueriesTests_with_anonymous_object_and_factory : AutoMapperSpecBase
     {
         private Dest[] _dests;
         private IQueryable<Source> _sources;
@@ -22,58 +22,7 @@
             public int Value { get; set; }
         }
 
-        protected override void Establish_context()
-        {
-            Mapper.Initialize(cfg =>
-            {
-                int value = 0;
-
-                Expression<Func<Source, int>> sourceMember = src => value + 5;
-                cfg.CreateMap<Source, Dest>()
-                    .ForMember(dest => dest.Value, opt => opt.MapFrom(sourceMember));
-            });
-        }
-
-        protected override void Because_of()
-        {
-            _sources = new[]
-            {
-                new Source()
-            }.AsQueryable();
-
-            _dests = _sources.ProjectTo<Dest>(new { value = 10 }).ToArray();
-        }
-
-        [Fact]
-        public void Should_substitute_parameter_value()
-        {
-            _dests[0].Value.ShouldEqual(15);
-        }
-
-        [Fact]
-        public void Should_not_cache_parameter_value()
-        {
-            var newDests = _sources.ProjectTo<Dest>(new { value = 15 }).ToArray();
-
-            newDests[0].Value.ShouldEqual(20);
-        }
-    }
-
-    public class ParameterizedQueriesTests_with_anonymous_object : AutoMapperSpecBase
-    {
-        private Dest[] _dests;
-        private IQueryable<Source> _sources;
-
-        public class Source
-        {
-        }
-
-        public class Dest
-        {
-            public int Value { get; set; }
-        }
-
-        protected override MapperConfiguration Configuration => new MapperConfiguration(cfg =>
+        protected override MapperConfiguration Configuration { get; } = new MapperConfiguration(cfg =>
         {
             int value = 0;
 
@@ -95,7 +44,55 @@
         [Fact]
         public void Should_substitute_parameter_value()
         {
-            _dests[0].Value.ShouldEqual(15);
+            _dests[0].Value.ShouldBe(15);
+        }
+
+        [Fact]
+        public void Should_not_cache_parameter_value()
+        {
+            var newDests = _sources.ProjectTo<Dest>(Configuration, new { value = 15 }).ToArray();
+
+            newDests[0].Value.ShouldBe(20);
+        }
+    }
+
+    public class ParameterizedQueriesTests_with_anonymous_object : AutoMapperSpecBase
+    {
+        private Dest[] _dests;
+        private IQueryable<Source> _sources;
+
+        public class Source
+        {
+        }
+
+        public class Dest
+        {
+            public int Value { get; set; }
+        }
+
+        protected override MapperConfiguration Configuration { get; } = new MapperConfiguration(cfg =>
+        {
+            int value = 0;
+
+            Expression<Func<Source, int>> sourceMember = src => value + 5;
+            cfg.CreateMap<Source, Dest>()
+                .ForMember(dest => dest.Value, opt => opt.MapFrom(sourceMember));
+        });
+
+        protected override void Because_of()
+        {
+            _sources = new[]
+            {
+                new Source()
+            }.AsQueryable();
+
+            _dests = _sources.ProjectTo<Dest>(Configuration, new { value = 10 }).ToArray();
+        }
+
+        [Fact]
+        public void Should_substitute_parameter_value()
+        {
+            _dests[0].Value.ShouldBe(15);
         }
 
         [Fact]
@@ -103,7 +100,7 @@
         {
             var newDests = _sources.ProjectTo<Dest>(Configuration, new {value = 15}).ToArray();
 
-            newDests[0].Value.ShouldEqual(20);
+            newDests[0].Value.ShouldBe(20);
         }
     }
 
@@ -121,7 +118,7 @@
             public int Value { get; set; }
         }
 
-        protected override MapperConfiguration Configuration => new MapperConfiguration(cfg =>
+        protected override MapperConfiguration Configuration { get; } = new MapperConfiguration(cfg =>
         {
             int value = 0;
 
@@ -143,7 +140,7 @@
         [Fact]
         public void Should_substitute_parameter_value()
         {
-            _dests[0].Value.ShouldEqual(15);
+            _dests[0].Value.ShouldBe(15);
         }
 
         [Fact]
@@ -151,8 +148,8 @@
         {
             var newDests = _sources.ProjectTo<Dest>(Configuration, new Dictionary<string, object> { { "value", 15 } }).ToArray();
 
-            newDests[0].Value.ShouldEqual(20);
-        }
+            newDests[0].Value.ShouldBe(20);
+        }  
     }
 
     public class ParameterizedQueriesTests_with_filter : AutoMapperSpecBase
@@ -186,7 +183,7 @@
             public IQueryable<User> Users { get; }
         }
 
-        protected override MapperConfiguration Configuration => new MapperConfiguration(cfg =>
+        protected override MapperConfiguration Configuration { get; } = new MapperConfiguration(cfg =>
         {
             DB db = null;
 
@@ -202,8 +199,7 @@
 
             var user = db.Users.ProjectTo<UserViewModel>(Configuration, new { db }).FirstOrDefault(a => a.Id == 2);
 
-            user.position.ShouldEqual(1);
+            user.position.ShouldBe(1);
         }
-
     }
 }

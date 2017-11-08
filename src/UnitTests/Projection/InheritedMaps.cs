@@ -4,7 +4,7 @@
     {
         using System.Linq;
         using QueryableExtensions;
-        using Should;
+        using Shouldly;
         using Xunit;
 
         public class SourceBase
@@ -26,7 +26,7 @@
         {
             private Dest[] _dest;
 
-            protected override MapperConfiguration Configuration => new MapperConfiguration(cfg =>
+            protected override MapperConfiguration Configuration { get; } = new MapperConfiguration(cfg =>
             {
                 cfg.CreateMap<SourceBase, Dest>()
                     .Include<Source, Dest>()
@@ -51,7 +51,7 @@
             [Fact]
             public void Should_inherit_base_mapping()
             {
-                _dest[0].Value.ShouldEqual(10);
+                _dest[0].Value.ShouldBe(10);
             }
         }
     }

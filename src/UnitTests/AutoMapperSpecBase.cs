@@ -1,7 +1,5 @@
 using System;
-using Should;
 using Xunit;
-using Rhino.Mocks;
 
 namespace AutoMapper.UnitTests
 {
@@ -24,22 +22,7 @@ namespace AutoMapper.UnitTests
         protected abstract MapperConfiguration Configuration { get; }
         protected IConfigurationProvider ConfigProvider => Configuration;
 
-        protected IMapper Mapper
-        {
-            get
-            {
-                if(mapper == null)
-                {
-                    mapper = Configuration.CreateMapper();
-                }
-                return mapper;
-            }
-        }
-
-        protected override void Cleanup()
-        {
-            AutoMapper.Mapper.Reset();
-        }
+        protected IMapper Mapper => mapper ?? (mapper = Configuration.CreateMapper());
     }
 
     public abstract class SpecBaseBase
@@ -65,18 +48,6 @@ namespace AutoMapper.UnitTests
 
         protected virtual void Cleanup()
         {
-        }
-
-
-        protected TType CreateDependency<TType>()
-            where TType : class
-        {
-            return MockRepository.GenerateMock<TType>();
-        }
-
-        protected TType CreateStub<TType>() where TType : class
-        {
-            return MockRepository.GenerateStub<TType>();
         }
     }
     public abstract class SpecBase : SpecBaseBase, IDisposable

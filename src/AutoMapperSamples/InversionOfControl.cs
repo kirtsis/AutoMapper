@@ -1,10 +1,9 @@
 using System.Collections.Generic;
 using AutoMapper;
-using AutoMapper.Mappers;
 using NUnit.Framework;
 using StructureMap;
 using StructureMap.Attributes;
-using Should;
+using Shouldly;
 using StructureMap.Configuration.DSL;
 
 namespace AutoMapperSamples
@@ -27,16 +26,16 @@ namespace AutoMapperSamples
             [Test]
             public void Example2()
             {
-                ObjectFactory.Initialize(init =>
+                var container = new Container(init =>
                 {
                     init.AddRegistry<ConfigurationRegistry>();
                 });
 
-                var engine = ObjectFactory.GetInstance<IMapper>();
+                var engine = container.GetInstance<IMapper>();
 
                 var destination = engine.Map<Source, Destination>(new Source {Value = 15});
 
-                destination.Value.ShouldEqual(15);
+                destination.Value.ShouldBe(15);
             }
 
             public class ConfigurationRegistry : Registry
@@ -45,7 +44,7 @@ namespace AutoMapperSamples
                 {
                     var configuration = new MapperConfiguration(cfg => cfg.CreateMap<Source, Destination>());
 
-                    ForRequestedType<IMapper>().TheDefault.Is.ConstructedBy(() => configuration.CreateMapper());
+                    For<IMapper>().Use(ctx => new Mapper(configuration, ctx.GetInstance));
                 }
             }
         }

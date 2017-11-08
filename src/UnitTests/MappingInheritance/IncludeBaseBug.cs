@@ -1,6 +1,6 @@
 ﻿namespace AutoMapper.UnitTests.MappingInheritance
 {
-    using Should;
+    using Shouldly;
 
     public class Test : AutoMapperSpecBase
     {
@@ -27,7 +27,7 @@
         }
 
 
-        protected override MapperConfiguration Configuration => new MapperConfiguration(cfg =>
+        protected override MapperConfiguration Configuration { get; } = new MapperConfiguration(cfg =>
         {
             cfg.CreateMap<From, Concrete>()
                 .ForMember(d => d.ConcreteValue, o => o.MapFrom(s => s == null ? default(int) : s.ChildValue))
@@ -43,7 +43,7 @@
         public void TestMethod1()
         {
             var dest = Mapper.Map(null, typeof(From), typeof(Concrete));
-            dest.ShouldBeType<Concrete>();
+            dest.ShouldBeOfType<Concrete>();
             ReferenceEquals(dest.GetType(), typeof(Concrete)).ShouldBeTrue();
         }
     }

@@ -1,4 +1,4 @@
-using Should;
+using Shouldly;
 using Xunit;
 
 namespace AutoMapper.UnitTests.Bug
@@ -33,7 +33,7 @@ namespace AutoMapper.UnitTests.Bug
         {
         }
 
-        protected override MapperConfiguration Configuration => new MapperConfiguration(cfg =>
+        protected override MapperConfiguration Configuration { get; } = new MapperConfiguration(cfg =>
         {
             cfg.CreateMap<Thing, ThingDto>();
             cfg.CreateMap<IItem, ItemDto>();
@@ -48,7 +48,7 @@ namespace AutoMapper.UnitTests.Bug
         [Fact]
         public void Should_map_successfully()
         {
-            _thingDto.Items.Length.ShouldEqual(1);
+            _thingDto.Items.Length.ShouldBe(1);
         }
     }
 }

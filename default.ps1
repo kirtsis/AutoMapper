@@ -10,24 +10,12 @@ properties {
 
 
 task default -depends local
-task local -depends init, compile, test
-task ci -depends clean, release, local
+task local -depends compile, test
+task ci -depends clean, release, local, benchmark
 
 task clean {
 	rd "$source_dir\artifacts" -recurse -force  -ErrorAction SilentlyContinue | out-null
 	rd "$base_dir\build" -recurse -force  -ErrorAction SilentlyContinue | out-null
-}
-
-task init {
-	$dnxVersion = Get-DnxVersion
-	
-	# Make sure per-user DNVM is installed
-	Install-Dnvm
-
-	# Install DNX
-	dnvm install $dnxVersion -r CoreCLR -NoNative
-	dnvm install $dnxVersion -r CLR -NoNative
-	dnvm use $dnxVersion -r CLR
 }
 
 task release {
@@ -35,50 +23,46 @@ task release {
 }
 
 task compile -depends clean {
-	$env:DNX_BUILD_VERSION=$env:APPVEYOR_BUILD_NUMBER
 
-    exec { dnu restore }
-    exec { dnu pack $source_dir\AutoMapper --configuration $config}
-    exec { & $source_dir\.nuget\Nuget.exe restore $source_dir\AutoMapper.NoProjectJson.sln }
-    exec { msbuild /t:Clean /t:Build /p:Configuration=$config /v:q /p:NoWarn=1591 /nologo $source_dir\AutoMapper.sln }
+	$tag = $(git tag -l --points-at HEAD)
+	$revision = @{ $true = "{0:00000}" -f [convert]::ToInt32("0" + $env:APPVEYOR_BUILD_NUMBER, 10); $false = "local" }[$env:APPVEYOR_BUILD_NUMBER -ne $NULL];
+	$suffix = @{ $true = ""; $false = "ci-$revision"}[$tag -ne $NULL -and $revision -ne "local"]
+	$commitHash = $(git rev-parse --short HEAD)
+	$buildSuffix = @{ $true = "$($suffix)-$($commitHash)"; $false = "$($branch)-$($commitHash)" }[$suffix -ne ""]
+
+	echo "build: Tag is $tag"
+	echo "build: Package version suffix is $suffix"
+	echo "build: Build version suffix is $buildSuffix" 
+	
+	exec { dotnet --version }
+	exec { dotnet --info }
+
+	exec { .\nuget.exe restore $base_dir\AutoMapper.sln }
+
+	exec { dotnet restore $base_dir\AutoMapper.sln }
+
+    exec { dotnet build $base_dir\AutoMapper.sln -c $config --version-suffix=$buildSuffix -v q /nologo }
+
+	exec { dotnet pack $source_dir\AutoMapper\AutoMapper.csproj -c $config --include-symbols --no-build --version-suffix=$suffix }
+}
+
+task benchmark {
+    exec { & $source_dir\Benchmark\bin\$config\Benchmark.exe }
 }
 
 task test {
-    $testRunners = @(gci $source_dir\packages -rec -filter Fixie.Console.exe)
 
-    if ($testRunners.Length -ne 1)
-    {
-        throw "Expected to find 1 Fixie.Console.exe, but found $($testRunners.Length)."
-    }
+    Push-Location -Path $source_dir\UnitTests
 
-    $testRunner = $testRunners[0].FullName
+    exec { & dotnet xunit -configuration Release }
 
-    exec { & $testRunner $source_dir/UnitTests/bin/$config/AutoMapper.UnitTests.Net4.dll }
-    exec { & $testRunner $source_dir/UnitTests.Portable/bin/$config/AutoMapper.UnitTests.Portable.dll }
-    exec { & $testRunner $source_dir/IntegrationTests.Net4/bin/$config/AutoMapper.IntegrationTests.Net4.dll }
-}
+    Pop-Location
 
-function Install-Dnvm
-{
-    & where.exe dnvm 2>&1 | Out-Null
-    if(($LASTEXITCODE -ne 0) -Or ((Test-Path Env:\TEAMCITY_VERSION) -eq $true))
-    {
-        Write-Host "DNVM not found"
-        &{$Branch='dev';iex ((New-Object net.webclient).DownloadString('https://raw.githubusercontent.com/aspnet/Home/dev/dnvminstall.ps1'))}
+    Push-Location -Path $source_dir\IntegrationTests
 
-        if($env:DNX_HOME -eq $NULL)
-        {
-            Write-Host "Initial DNVM environment setup failed; running manual setup"
-            $tempDnvmPath = Join-Path $env:TEMP "dnvminstall"
-            $dnvmSetupCmdPath = Join-Path $tempDnvmPath "dnvm.ps1"
-            & $dnvmSetupCmdPath setup
-        }
-    }
-}
+    exec { & dotnet xunit -configuration Release }
 
-function Get-DnxVersion
-{
-    $globalJson = Join-Path $PSScriptRoot "global.json"
-    $jsonData = Get-Content -Path $globalJson -Raw | ConvertFrom-JSON
-    return $jsonData.sdk.version
+    Pop-Location
+
+    exec { & $env:USERPROFILE\.nuget\packages\xunit.runners\1.9.2\tools\xunit.console.clr4.exe $source_dir\UnitTests\bin\$config\net40\AutoMapper.UnitTests.dll }
 }

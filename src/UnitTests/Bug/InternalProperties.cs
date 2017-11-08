@@ -1,5 +1,5 @@
 ﻿using Xunit;
-using Should;
+using Shouldly;
 using System;
 
 namespace AutoMapper.UnitTests.Bug
@@ -18,7 +18,7 @@ namespace AutoMapper.UnitTests.Bug
             internal int Number { get; set; }
         }
 
-        protected override MapperConfiguration Configuration => new MapperConfiguration(cfg =>
+        protected override MapperConfiguration Configuration { get; } = new MapperConfiguration(cfg =>
         {
             cfg.ShouldMapProperty = p => true;
             cfg.CreateMap<Source, Destination>();
@@ -32,7 +32,7 @@ namespace AutoMapper.UnitTests.Bug
         [Fact]
         public void Should_map_internal_property()
         {
-            _destination.Number.ShouldEqual(SomeValue);
+            _destination.Number.ShouldBe(SomeValue);
         }
     }
 }

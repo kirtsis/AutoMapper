@@ -1,5 +1,6 @@
 ﻿using AutoMapper.Mappers;
-using Should;
+using AutoMapper.Configuration.Conventions;
+using Shouldly;
 using Xunit;
 
 namespace AutoMapper.UnitTests
@@ -21,10 +22,12 @@ namespace AutoMapper.UnitTests
             public string Key { get; set; }
         }
 
-        protected override MapperConfiguration Configuration => new MapperConfiguration(cfg =>
+        protected override MapperConfiguration Configuration { get; } = new MapperConfiguration(cfg =>
         {
-            var profile = cfg.CreateProfile("New Profile");
-            profile.AddConditionalObjectMapper().Where((s, d) => s.Name.Contains(d.Name) || d.Name.Contains(s.Name));
+            cfg.CreateProfile("New Profile", profile =>
+            {
+                profile.AddConditionalObjectMapper().Where((s, d) => s.Name.Contains(d.Name) || d.Name.Contains(s.Name));
+            });
         });
 
         [Fact]
@@ -36,8 +39,8 @@ namespace AutoMapper.UnitTests
                 Key = "MyKey"
             };
             CategoryDto result = Mapper.Map<CategoryDto>(category);
-            result.Id.ShouldEqual("3");
-            result.MyValueProperty.ShouldEqual("MyKey");
+            result.Id.ShouldBe("3");
+            result.MyValueProperty.ShouldBe("MyKey");
         }
     }
 }

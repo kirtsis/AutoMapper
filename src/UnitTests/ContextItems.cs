@@ -2,7 +2,7 @@
 {
     namespace ContextItems
     {
-        using Should;
+        using Shouldly;
         using Xunit;
 
         public class When_mapping_with_contextual_values
@@ -17,26 +17,53 @@
                 public int Value { get; set; }
             }
 
-            public class ContextResolver : IValueResolver
+            public class ContextResolver : IMemberValueResolver<Source, Dest, int, int>
             {
-                public ResolutionResult Resolve(ResolutionResult source)
+                public int Resolve(Source src, Dest d, int source, int dest, ResolutionContext context)
                 {
-                    return source.New((int) source.Value + (int)source.Context.Options.Items["Item"]);
+                    return source + (int)context.Options.Items["Item"];
                 }
             }
 
             [Fact]
             public void Should_use_value_passed_in()
             {
-                Mapper.Initialize(cfg =>
+                var config = new MapperConfiguration(cfg =>
                 {
                     cfg.CreateMap<Source, Dest>()
-                        .ForMember(d => d.Value, opt => opt.ResolveUsing<ContextResolver>().FromMember(src => src.Value));
+                        .ForMember(d => d.Value, opt => opt.ResolveUsing<ContextResolver, int>(src => src.Value));
                 });
 
-                var dest = Mapper.Map<Source, Dest>(new Source { Value = 5 }, opt => { opt.Items["Item"] = 10; });
+                var dest = config.CreateMapper().Map<Source, Dest>(new Source { Value = 5 }, opt => { opt.Items["Item"] = 10; });
 
-                dest.Value.ShouldEqual(15);
+                dest.Value.ShouldBe(15);
+            }
+        }
+
+        public class When_mapping_with_contextual_values_shortcut
+        {
+            public class Source
+            {
+                public int Value { get; set; }
+            }
+
+            public class Dest
+            {
+                public int Value { get; set; }
+            }
+
+            [Fact]
+            public void Should_use_value_passed_in()
+            {
+                var config = new MapperConfiguration(cfg =>
+                {
+                    cfg.CreateMap<Source, Dest>()
+                        .ForMember(d => d.Value, opt => opt.ResolveUsing((src, d, member, ctxt) => (int)ctxt.Items["Item"] + 5));
+                });
+
+                var dest = config.CreateMapper().Map<Source, Dest>(new Source { Value = 5 }, opt => opt.Items["Item"] = 10);
+
+                dest.Value.ShouldBe(15);
             }
         }
 
@@ -52,26 +79,18 @@
                 public int Value1 { get; set; }
             }
 
-            public class ContextResolver : IValueResolver
-            {
-                public ResolutionResult Resolve(ResolutionResult source)
-                {
-                    return source.New((int) source.Value + (int)source.Context.Options.Items["Item"]);
-                }
-            }
-
             [Fact]
             public void Should_use_value_passed_in()
             {
-                Mapper.Initialize(cfg =>
+                var config = new MapperConfiguration(cfg =>
                 {
                     cfg.CreateMap<Source, Dest>()
-                        .ForMember(d => d.Value1, opt => opt.ResolveUsing(result => (int)result.Context.Options.Items["Item"] + ((Source)result.Value).Value1));
+                        .ForMember(d => d.Value1, opt => opt.ResolveUsing((source, d, dMember, context) => (int)context.Options.Items["Item"] + source.Value1));
                 });
 
-                var dest = Mapper.Map<Source, Dest>(new Source { Value1 = 5 }, opt => { opt.Items["Item"] = 10; });
+                var dest = config.CreateMapper().Map<Source, Dest>(new Source { Value1 = 5 }, opt => { opt.Items["Item"] = 10; });
 
-                dest.Value1.ShouldEqual(15);
+                dest.Value1.ShouldBe(15);
             }
         }
     }

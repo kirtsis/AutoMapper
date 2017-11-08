@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using NUnit.Framework;
-using Should;
+using Shouldly;
 
 namespace AutoMapperSamples.Mappers
 {
@@ -47,8 +47,28 @@ namespace AutoMapperSamples.Mappers
                     .UseAsDataSource(mapper).For<Destination>()
                     .Where(s => s.DestValue > 6);
 
-                result.Count().ShouldEqual(1);
-                result.First().GetType().ShouldEqual(typeof(Destination));
+                result.Count().ShouldBe(1);
+                result.First().GetType().ShouldBe(typeof(Destination));
+            }
+
+            [Test]
+            public void Select_source_items_from_destination_with_explicit_mapping()
+            {
+                Mapper.Initialize(cfg =>
+                {
+                    cfg.CreateMap<Destination, Source>()
+                        .ForMember(d => d.SrcValue, opt => opt.MapFrom(s => s.DestValue))
+                        .ReverseMap()
+                        .ForMember(d => d.DestValue, opt => opt.MapFrom(s => s.SrcValue))
+                        ;
+                });
+
+                IQueryable<Destination> result = _source.AsQueryable()
+                    .UseAsDataSource(Mapper.Configuration).For<Destination>()
+                    .Where(s => s.DestValue > 6);
+
+                result.Count().ShouldBe(1);
+                result.First().GetType().ShouldBe(typeof(Destination));
             }
         }
     }

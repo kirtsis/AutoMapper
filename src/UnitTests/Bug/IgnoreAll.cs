@@ -2,7 +2,7 @@ using Xunit;
 
 namespace AutoMapper.UnitTests.Bug
 {
-    using Should;
+    using Shouldly;
 
     public class When_configuring_all_members_and_some_do_not_match
     {
@@ -24,15 +24,15 @@ namespace AutoMapper.UnitTests.Bug
         }
         public void SetUp()
         {
-            Mapper.Reset();
+            
         }
 
         [Fact]
         public void Should_still_apply_configuration_to_missing_members()
         {
-            Mapper.CreateMap<ModelObjectNotMatching, ModelDto>()
-                .ForAllMembers(opt => opt.Ignore());
-            Mapper.AssertConfigurationIsValid();
+            var config = new MapperConfiguration(cfg => cfg.CreateMap<ModelObjectNotMatching, ModelDto>()
+                .ForAllMembers(opt => opt.Ignore()));
+            config.AssertConfigurationIsValid();
         }
     }
 
@@ -53,10 +53,10 @@ namespace AutoMapper.UnitTests.Bug
             public string Unmapped { get; set; }
         }
 
-        protected override MapperConfiguration Configuration => new MapperConfiguration(cfg =>
+        protected override MapperConfiguration Configuration { get; } = new MapperConfiguration(cfg =>
         {
             cfg.CreateMap<Source, Dest>()
-                .ForAllMembers(opt => opt.Condition(c => !c.IsSourceValueNull));
+                .ForAllMembers(opt => opt.Condition((src, dest, srcVal, destVal, c) => srcVal != null));
         });
 
         protected override void Because_of()
@@ -75,7 +75,7 @@ namespace AutoMapper.UnitTests.Bug
         public void Should_only_apply_source_value_when_not_null()
         {
             _destination.Value1.ShouldNotBeNull();
-            _destination.Value2.ShouldNotEqual(null);
+            _destination.Value2.ShouldNotBe(null);
             _destination.Unmapped.ShouldNotBeNull();
         }
     }

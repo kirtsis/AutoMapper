@@ -1,29 +1,29 @@
-﻿#if !PORTABLE
+﻿using System.Collections.Specialized;
+using System.Linq.Expressions;
+using static System.Linq.Expressions.Expression;
+using System.Reflection;
+
+#if !NETSTANDARD1_1
 namespace AutoMapper.Mappers
 {
-    using System.Collections.Specialized;
-
     public class NameValueCollectionMapper : IObjectMapper
     {
-        public object Map(ResolutionContext context)
+        private static NameValueCollection Map(NameValueCollection source)
         {
-            if (context.SourceValue == null)
-                return null;
-
             var nvc = new NameValueCollection();
-            var source = (NameValueCollection)context.SourceValue;
             foreach (var s in source.AllKeys)
                 nvc.Add(s, source[s]);
 
             return nvc;
         }
 
-        public bool IsMatch(TypePair context)
-        {
-            return
-                context.SourceType == typeof (NameValueCollection) &&
-                context.DestinationType == typeof (NameValueCollection);
-        }
+        private static readonly MethodInfo MapMethodInfo = typeof(NameValueCollectionMapper).GetDeclaredMethod(nameof(Map));
+
+        public bool IsMatch(TypePair context) => context.SourceType == typeof (NameValueCollection) &&
+                                                 context.DestinationType == typeof (NameValueCollection);
+
+        public Expression MapExpression(IConfigurationProvider configurationProvider, ProfileMap profileMap, PropertyMap propertyMap, Expression sourceExpression, Expression destExpression, Expression contextExpression) => 
+            Call(null, MapMethodInfo, sourceExpression);
     }
 }
 #endif

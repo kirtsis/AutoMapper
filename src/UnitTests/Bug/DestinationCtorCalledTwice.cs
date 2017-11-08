@@ -1,5 +1,5 @@
 ﻿using Xunit;
-using Should;
+using Shouldly;
 
 namespace AutoMapper.UnitTests.Bug
 {
@@ -40,10 +40,10 @@ namespace AutoMapper.UnitTests.Bug
                 var source = new Source {Value = 5};
                 var dest = new Destination {Value = 7};
 
-                Mapper.Initialize(cfg => cfg.CreateMissingTypeMaps = true);
-                Mapper.Map(source, dest);
+                var config = new MapperConfiguration(cfg => cfg.CreateMissingTypeMaps = true);
+                config.CreateMapper().Map(source, dest);
 
-                Destination.CallCount.ShouldEqual(1);
+                Destination.CallCount.ShouldBe(1);
             }
         }
     }
